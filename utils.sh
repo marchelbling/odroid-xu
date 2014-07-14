@@ -1,20 +1,6 @@
 #!/bin/bash
 
-function success() {
-  local msg="${1:"${FUNCNAME[1]}"}"  # caller name
-  echo "${msg} successful"
-  return 0
-}
-export -f success
-
-
-function failure() {
-  local msg="${1:"${FUNCNAME[1]}"}"  # caller name
-  echo "${msg} failure"
-  return 1
-}
-export -f failure
-
+. assert.sh
 
 function decompress() {
     local archive="$1"
@@ -56,12 +42,25 @@ function git_clone() {
   local clone_dir="${3:-${CLONE_DIR:-"/root/builds/"}}"
   local current="$( pwd )"
 
+  if [ ! -d "${clone_dir}" ]
+  then
+    mkdir -p "${clone_dir}"
+  fi
+
   # human repo name
   local repo="$( strip_extension $( basename "${remote}" ) )"
   # clone absolute path
   clone="${clone_dir}/${repo}"
 
-  git clone --recursive --branch "${branch_or_tag}" "${remote}" "${clone}"
+  if [ ! -d "${clone}" ]
+  then
+    if [ "${branch_or_tag}" ]
+    then
+      git clone --recursive --branch "${branch_or_tag}" "${remote}" "${clone}"
+    else
+      git clone --recursive "${remote}" "${clone}"
+    fi
+  fi
 }
 export -f git_clone
 
